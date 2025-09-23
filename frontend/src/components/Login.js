@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Shield, Eye, EyeOff, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Lock, User } from 'lucide-react';
 
 const Login = ({ onLogin }) => {
   const [credentials, setCredentials] = useState({

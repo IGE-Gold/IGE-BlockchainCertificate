@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { apiService, handleApiError } from '../services/api';
-import { Search, Filter, Download, ExternalLink, Eye, RefreshCw, AlertCircle } from 'lucide-react';
+import { Search, ExternalLink, Eye, RefreshCw, AlertCircle } from 'lucide-react';
 
 const CertificateList = () => {
   const [certificates, setCertificates] = useState([]);

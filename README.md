@@ -2,6 +2,8 @@
 
 A blockchain-based certificate management system for gold products, built with Node.js, React, and Polygon blockchain.
 
+**Author:** Giuseppe Bosi
+
 > **⚠️ PROPRIETARY SOFTWARE**  
 > This software is proprietary and confidential. It is owned by **IGE Gold s.r.l.** and is intended for internal use only. Unauthorized distribution, copying, or modification is strictly prohibited.
 

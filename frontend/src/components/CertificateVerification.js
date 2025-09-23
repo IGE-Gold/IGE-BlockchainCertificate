@@ -267,8 +267,9 @@ const CertificateVerification = () => {
                           lineHeight: '1.4',
                           color: '#e0e0e0',
                           whiteSpace: 'pre-wrap',
-                          overflow: 'auto',
-                          maxHeight: '300px'
+                          overflow: 'visible',
+                          minHeight: '100px',
+                          maxHeight: 'none'
                         }}
                       >
                         {result.blockchainData.certificateMessage}

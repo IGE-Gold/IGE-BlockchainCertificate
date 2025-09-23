@@ -1,19 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { apiService, handleApiError } from '../services/api';
 import { 
-  Edit3, 
   Save, 
   Trash2, 
   Download, 
-  Upload, 
   Copy, 
   ClipboardPaste, 
   Undo, 
   Redo, 
   Lock, 
   Unlock, 
-  AlertCircle, 
-  CheckCircle,
+  AlertCircle,
   RefreshCw,
   History,
   FileText

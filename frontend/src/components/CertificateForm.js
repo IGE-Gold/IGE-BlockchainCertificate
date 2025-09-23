@@ -20,7 +20,6 @@ const CertificateForm = () => {
 
   const [loading, setLoading] = useState(false);
   const [generatingSerial, setGeneratingSerial] = useState(false);
-  const [validatingSerial, setValidatingSerial] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
   const [serialValidation, setSerialValidation] = useState(null);
@@ -47,7 +46,6 @@ const CertificateForm = () => {
   const validateSerial = async () => {
     if (!formData.serial) return;
     
-    setValidatingSerial(true);
     setError(null);
     
     try {
@@ -55,8 +53,6 @@ const CertificateForm = () => {
       setSerialValidation(response);
     } catch (err) {
       setError(handleApiError(err));
-    } finally {
-      setValidatingSerial(false);
     }
   };
 

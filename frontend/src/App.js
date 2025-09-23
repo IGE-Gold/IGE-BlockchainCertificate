@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import './styles/App.css';
-import { apiService, testConnection } from './services/api';
+import { testConnection } from './services/api';
 import CertificateForm from './components/CertificateForm';
 import CertificateList from './components/CertificateList';
 import CertificateVerification from './components/CertificateVerification';
 import Stats from './components/Stats';
 import CsvEditor from './components/CsvEditor';
 import Login from './components/Login';
-import { Shield, FileText, Search, BarChart3, Home, Database } from 'lucide-react';
+import { FileText, Search, BarChart3, Home, Database } from 'lucide-react';
 
 // Componente Header
 const Header = ({ onLogout }) => {

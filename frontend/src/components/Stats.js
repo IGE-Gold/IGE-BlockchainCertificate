@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { apiService, handleApiError } from '../services/api';
-import { BarChart3, TrendingUp, Shield, FileText, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
+import { BarChart3, TrendingUp, FileText, RefreshCw, AlertCircle, CheckCircle } from 'lucide-react';
 
 const Stats = () => {
   const [stats, setStats] = useState(null);
@@ -34,38 +34,8 @@ const Stats = () => {
     return new Intl.NumberFormat('it-IT').format(num);
   };
 
-  // Formatta percentuale
-  const formatPercentage = (value, total) => {
-    if (total === 0) return '0%';
-    return `${((value / total) * 100).toFixed(1)}%`;
-  };
 
-  // Ottieni colore per metallo
-  const getMetalColor = (metal) => {
-    const colors = {
-      'Au': '#f59e0b',
-      'Ag': '#9ca3af',
-      'Pt': '#3b82f6'
-    };
-    return colors[metal] || '#667eea';
-  };
 
-  // Ottieni mesi per grafico
-  const getMonthsForChart = () => {
-    if (!stats?.byMonth) return [];
-    
-    const months = Object.entries(stats.byMonth)
-      .sort(([a], [b]) => b.localeCompare(a))
-      .slice(0, 12); // Ultimi 12 mesi
-    
-    return months.map(([month, count]) => ({
-      month: new Date(month + '-01').toLocaleDateString('it-IT', { 
-        year: 'numeric', 
-        month: 'short' 
-      }),
-      count
-    }));
-  };
 
   return (
     <div className="main">
