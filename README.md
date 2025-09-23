@@ -15,6 +15,22 @@ A blockchain-based certificate management system for gold products, built with N
 - **Excel-like Editor**: Advanced CSV editing capabilities
 - **Authentication**: Token-based API security
 - **Real-time Validation**: Serial number validation and uniqueness checks
+- **Auto-expanding Display**: Certificate data shows without scrollbars
+- **Professional Screenshots**: Complete visual documentation
+
+## 📸 Screenshots
+
+The application includes comprehensive screenshots showing all features:
+
+- **Certificate Creation**: Form interface for creating new certificates
+- **Certificate Verification**: Blockchain verification with auto-expanding data display
+- **Certificate List**: Management interface with search and filtering
+- **CSV Editor**: Excel-like editing capabilities
+- **Statistics Dashboard**: System usage and blockchain status
+- **Login Interface**: Secure authentication system
+- **Blockchain Integration**: Real-time blockchain data display
+
+*View all screenshots in the `Screenshots/` directory*
 
 ## 📋 Prerequisites
 
@@ -33,9 +49,15 @@ A blockchain-based certificate management system for gold products, built with N
    cd IGE-BlockchainCertificate
    ```
 
-2. **Run the installer**
+2. **Install dependencies**
    ```bash
-   install.bat
+   # Backend
+   cd backend
+   npm install
+   
+   # Frontend
+   cd ../frontend
+   npm install
    ```
 
 3. **Configure environment variables**
@@ -45,7 +67,13 @@ A blockchain-based certificate management system for gold products, built with N
 
 4. **Start the system**
    ```bash
-   start-all.bat
+   # Terminal 1 - Backend
+   cd backend
+   npm start
+   
+   # Terminal 2 - Frontend
+   cd frontend
+   npm start
    ```
 
 ### Manual Installation
@@ -107,6 +135,9 @@ The frontend requires API connection settings. Copy `frontend/env.example` to `f
 3. **Certificate List**: View and manage all certificates
 4. **CSV Editor**: Advanced Excel-like editing capabilities
 5. **Statistics**: System usage and blockchain status
+6. **Auto-expanding Display**: Certificate data shows without scrollbars
+7. **Professional UI**: Modern dark theme with responsive design
+8. **Real-time Validation**: Instant serial number validation
 
 ## 🔗 Blockchain Integration
 
@@ -145,8 +176,14 @@ IGE-BlockchainCertificate/
 │   └── .env                # Frontend configuration
 ├── data/                   # CSV database
 ├── backups/                # CSV backups
-├── install.bat             # Installation script
-├── start-all.bat           # Launch script
+├── Screenshots/            # Application screenshots
+│   ├── IGE Blockchain Certificate (1).png
+│   ├── IGE Blockchain Certificate (2).png
+│   ├── IGE Blockchain Certificate (3).png
+│   ├── IGE Blockchain Certificate (4).png
+│   ├── IGE Blockchain Certificate (5).png
+│   ├── IGE Blockchain Certificate (6).png
+│   └── IGE Blockchain Certificate (7).png
 └── README.md               # This file
 ```
 
