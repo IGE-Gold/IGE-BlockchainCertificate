@@ -2,10 +2,13 @@
 
 A blockchain-based certificate management system for gold products, built with Node.js, React, and Polygon blockchain.
 
-**Author:** Giuseppe Bosi
+**Author:** Giuseppe Bosi  
+**Company:** [IGE Gold S.p.A.](https://www.ige.gold/)
+
+![IGE Gold Logo](https://www.ige.gold/ige.svg)
 
 > **⚠️ PROPRIETARY SOFTWARE**  
-> This software is proprietary and confidential. It is owned by **IGE Gold s.r.l.** and is intended for internal use only. Unauthorized distribution, copying, or modification is strictly prohibited.
+> This software is proprietary and confidential. It is owned by **IGE Gold S.p.A.** and is intended for internal use only. Unauthorized distribution, copying, or modification is strictly prohibited.
 
 ## 🚀 Features
 
@@ -17,6 +20,7 @@ A blockchain-based certificate management system for gold products, built with N
 - **Real-time Validation**: Serial number validation and uniqueness checks
 - **Auto-expanding Display**: Certificate data shows without scrollbars
 - **Professional Screenshots**: Complete visual documentation
+- **Smart Serial Generation**: YYNNNNN format with year-based progressive numbering
 
 ## 📸 Screenshots
 
@@ -139,6 +143,97 @@ The frontend requires API connection settings. Copy `frontend/env.example` to `f
 7. **Professional UI**: Modern dark theme with responsive design
 8. **Real-time Validation**: Instant serial number validation
 
+## 🔢 Serial Number System
+
+### Format: YYNNNNN
+The system uses a smart serial number format:
+- **YY**: Last two digits of the year (e.g., 25 for 2025)
+- **NNNNN**: Progressive number within the year (00001-99999)
+
+### Examples
+- **2500001**: First certificate of 2025
+- **2500002**: Second certificate of 2025
+- **2600001**: First certificate of 2026
+
+### Smart Generation Logic
+1. **Year-based filtering**: Only considers certificates from the current year
+2. **Progressive numbering**: Automatically finds the next available number
+3. **Gap detection**: Handles missing numbers in the sequence
+4. **Year reset**: Starts from 00001 each new year
+
+## 🔐 Data Encoding System
+
+### Multi-Layer Encoding Architecture
+The system implements a sophisticated multi-layer encoding system for secure data storage and transmission:
+
+#### 1. **Serial Number Encoding (YYNNNNN)**
+- **Format**: 7-digit alphanumeric identifier
+- **Structure**: `YY` (year) + `NNNNN` (progressive number)
+- **Validation**: Regex pattern `/^\d{7}$/` ensures format compliance
+- **Year Handling**: Automatically converts between 2-digit and 4-digit years
+- **Progressive Logic**: Smart gap detection and sequential numbering
+
+#### 2. **CSV Data Encoding**
+- **Character Encoding**: UTF-8 (configurable via `CSV_ENCODING` env var)
+- **Delimiter**: Semicolon (`;`) by default (configurable via `CSV_DELIMITER`)
+- **Field Structure**: 14 standardized fields with consistent formatting
+- **Backup System**: Automatic timestamped backups before each write operation
+
+#### 3. **Blockchain Data Encoding**
+- **JSON Structure**: Hierarchical data organization with nested objects
+- **UTF-8 Conversion**: Data converted to UTF-8 bytes using `ethers.toUtf8Bytes()`
+- **Hexadecimal Encoding**: UTF-8 data encoded as hexadecimal for blockchain storage
+- **Gas Optimization**: Intelligent gas estimation with configurable multipliers
+
+#### 4. **Certificate Data Structure**
+```json
+{
+  "type": "GOLD_CERTIFICATE",
+  "version": "1.0",
+  "serial": "certificate_serial",
+  "created_on": "MM/DD/YYYY",
+  "timestamp": "ISO_8601_format",
+  "company": {
+    "name": "string",
+    "tax_code": "string",
+    "social_capital": "string",
+    "authorization": "string"
+  },
+  "product": {
+    "metal": "string",
+    "fineness": "string",
+    "weight": "string",
+    "production_date": "string",
+    "location": {
+      "city": "string",
+      "country": "string"
+    }
+  },
+  "disclaimer": "string"
+}
+```
+
+#### 5. **Encoding Validation & Security**
+- **Format Validation**: Multi-level validation for serial numbers and data integrity
+- **Uniqueness Checks**: Prevents duplicate serial numbers across the system
+- **Error Handling**: Comprehensive error management with detailed logging
+- **Data Integrity**: Backup and recovery mechanisms ensure data consistency
+
+#### 6. **Configuration Parameters**
+- `MAX_PROGRESSIVE`: Maximum progressive number per year (default: 99999)
+- `CSV_ENCODING`: Character encoding for CSV files (default: utf8)
+- `CSV_DELIMITER`: Field separator for CSV files (default: ;)
+- `GAS_LIMIT_MULTIPLIER`: Gas estimation multiplier (default: 1.2)
+- `MAX_GAS_PRICE`: Maximum gas price limit (default: 50000000000)
+
+### Encoding Flow
+1. **Input Validation**: Serial format and data structure validation
+2. **CSV Encoding**: UTF-8 encoding with configurable delimiter
+3. **Blockchain Preparation**: JSON structure creation and validation
+4. **Hexadecimal Conversion**: UTF-8 to hex conversion for blockchain storage
+5. **Transaction Encoding**: Gas estimation and transaction preparation
+6. **Verification**: Multi-layer verification of encoded data integrity
+
 ## 🔗 Blockchain Integration
 
 ### Network
@@ -247,9 +342,9 @@ All API requests require authentication via:
 
 ## 📄 License & Copyright
 
-**© 2025 IGE Gold s.r.l. All rights reserved.**
+**© 2025 IGE Gold S.p.A. All rights reserved.**
 
-This software is proprietary and confidential. It is owned by IGE Gold s.r.l. and is intended for internal use only. No part of this software may be reproduced, distributed, or transmitted in any form or by any means without the prior written permission of IGE Gold s.r.l.
+This software is proprietary and confidential. It is owned by [IGE Gold S.p.A.](https://www.ige.gold/) and is intended for internal use only. No part of this software may be reproduced, distributed, or transmitted in any form or by any means without the prior written permission of IGE Gold S.p.A.
 
 **Unauthorized use, copying, or distribution is strictly prohibited and may result in legal action.**
 
@@ -262,4 +357,4 @@ For support and questions:
 
 ---
 
-**IGE Gold Certificate System** - Secure, blockchain-authenticated gold product certification.
+**IGE Gold Certificate System** - Secure, blockchain-authenticated gold product certification by [IGE Gold S.p.A.](https://www.ige.gold/)
