@@ -34,7 +34,7 @@ const CertificateForm = () => {
     try {
       const response = await apiService.generateSerial();
       setFormData(prev => ({ ...prev, serial: response.serial }));
-      setSerialValidation({ isValid: true, isUnique: true });
+      // La validazione verrà fatta automaticamente dal useEffect
     } catch (err) {
       setError(handleApiError(err));
     } finally {
@@ -58,7 +58,7 @@ const CertificateForm = () => {
 
   // Valida seriale quando cambia
   useEffect(() => {
-    if (formData.serial && formData.serial.length === 13) {
+    if (formData.serial && formData.serial.length === 7) {
       const timeoutId = setTimeout(() => {
         validateSerial();
       }, 500);
@@ -190,7 +190,7 @@ const CertificateForm = () => {
               <h3 className="card-title mb-1" style={{ fontSize: '1rem', marginBottom: '0.25rem' }}>Seriale e Utente</h3>
               <div className="form-row">
                 <div className="form-group">
-                  <label className="form-label">Seriale (13 cifre)</label>
+                  <label className="form-label">Seriale (7 cifre)</label>
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -207,8 +207,8 @@ const CertificateForm = () => {
                     value={formData.serial}
                     onChange={handleChange}
                     className="form-input"
-                    placeholder="YYYYMMWWNNNNN"
-                    maxLength="13"
+                    placeholder="AANNNNN"
+                    maxLength="7"
                     required
                   />
                 </div>

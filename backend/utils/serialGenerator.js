@@ -2,7 +2,7 @@ const moment = require('moment');
 
 class SerialGenerator {
   constructor() {
-    this.serialLength = parseInt(process.env.SERIAL_LENGTH) || 13;
+    this.serialLength = 7; // YYNNNNN format: 2 digits year + 5 digits progressive
     this.maxProgressive = parseInt(process.env.MAX_PROGRESSIVE) || 99999;
   }
 
@@ -16,8 +16,8 @@ class SerialGenerator {
       return false;
     }
     
-    // Deve essere esattamente N cifre numeriche (configurabile)
-    const serialRegex = new RegExp(`^\\d{${this.serialLength}}$`);
+    // Deve essere esattamente 7 cifre numeriche (YYNNNNN)
+    const serialRegex = /^\d{7}$/;
     return serialRegex.test(serial);
   }
 
@@ -31,69 +31,72 @@ class SerialGenerator {
       return null;
     }
 
+    const year = parseInt(serial.substring(0, 2));
+    const progressive = parseInt(serial.substring(2, 7));
+
     return {
-      year: parseInt(serial.substring(0, 4)),
-      month: parseInt(serial.substring(4, 6)),
-      week: parseInt(serial.substring(6, 8)),
-      progressive: parseInt(serial.substring(8, 13))
+      year: year,
+      fullYear: 2000 + year, // Convert to full year
+      progressive: progressive
     };
   }
 
   /**
-   * Genera il prossimo seriale basato sull'ultimo seriale esistente
-   * @param {string} lastSerial - L'ultimo seriale generato
+   * Genera il prossimo seriale basato sui seriali esistenti per l'anno corrente
+   * @param {Array} existingSerials - Array di seriali esistenti per l'anno
    * @returns {string} - Il nuovo seriale
    */
-  generateNextSerial(lastSerial) {
+  generateNextSerial(existingSerials = []) {
     const now = moment();
     const currentYear = now.year();
-    const currentMonth = now.month() + 1; // moment usa 0-11, noi usiamo 1-12
-    const currentWeek = now.isoWeek();
+    const currentYearShort = currentYear % 100; // Ultime due cifre dell'anno
 
-    // Se non c'è un ultimo seriale, inizia con 00001
-    if (!lastSerial) {
-      return this.formatSerial(currentYear, currentMonth, currentWeek, 1);
+    // Filtra i seriali validi per l'anno corrente
+    const currentYearSerials = existingSerials.filter(serial => {
+      const serialData = this.parseSerial(serial);
+      return serialData && serialData.fullYear === currentYear;
+    });
+
+    // Se non ci sono seriali per l'anno corrente, inizia con 00001
+    if (currentYearSerials.length === 0) {
+      return this.formatSerial(currentYearShort, 1);
     }
 
-    const lastSerialData = this.parseSerial(lastSerial);
-    if (!lastSerialData) {
-      throw new Error('Formato ultimo seriale non valido');
-    }
+    // Ordina i seriali per progressivo crescente
+    const sortedSerials = currentYearSerials
+      .map(serial => this.parseSerial(serial))
+      .filter(data => data !== null)
+      .sort((a, b) => a.progressive - b.progressive);
 
-    // Se siamo nella stessa settimana, incrementa il progressivo
-    if (lastSerialData.year === currentYear && 
-        lastSerialData.month === currentMonth && 
-        lastSerialData.week === currentWeek) {
-      
-      const nextProgressive = lastSerialData.progressive + 1;
-      
-      // Controlla che non superi il limite configurabile
-      if (nextProgressive > this.maxProgressive) {
-        throw new Error(`Limite progressivo settimanale raggiunto (${this.maxProgressive})`);
+    // Trova il prossimo progressivo disponibile
+    let nextProgressive = 1;
+    for (const serialData of sortedSerials) {
+      if (serialData.progressive === nextProgressive) {
+        nextProgressive++;
+      } else {
+        break;
       }
-      
-      return this.formatSerial(currentYear, currentMonth, currentWeek, nextProgressive);
-    } else {
-      // Nuova settimana, reset progressivo a 1
-      return this.formatSerial(currentYear, currentMonth, currentWeek, 1);
     }
+
+    // Controlla che non superi il limite configurabile
+    if (nextProgressive > this.maxProgressive) {
+      throw new Error(`Limite progressivo annuale raggiunto (${this.maxProgressive})`);
+    }
+
+    return this.formatSerial(currentYearShort, nextProgressive);
   }
 
   /**
    * Formatta i componenti in un seriale completo
-   * @param {number} year - Anno (4 cifre)
-   * @param {number} month - Mese (1-12)
-   * @param {number} week - Settimana ISO (1-53)
+   * @param {number} year - Anno (2 cifre, ultime due cifre dell'anno)
    * @param {number} progressive - Progressivo (1-99999)
-   * @returns {string} - Seriale formattato
+   * @returns {string} - Seriale formattato YYNNNNN
    */
-  formatSerial(year, month, week, progressive) {
-    const yearStr = year.toString().padStart(4, '0');
-    const monthStr = month.toString().padStart(2, '0');
-    const weekStr = week.toString().padStart(2, '0');
+  formatSerial(year, progressive) {
+    const yearStr = year.toString().padStart(2, '0');
     const progressiveStr = progressive.toString().padStart(5, '0');
     
-    return `${yearStr}${monthStr}${weekStr}${progressiveStr}`;
+    return `${yearStr}${progressiveStr}`;
   }
 
   /**
@@ -105,10 +108,9 @@ class SerialGenerator {
   generateSerialForDate(date, progressive = 1) {
     const momentDate = moment(date);
     const year = momentDate.year();
-    const month = momentDate.month() + 1;
-    const week = momentDate.isoWeek();
+    const yearShort = year % 100;
     
-    return this.formatSerial(year, month, week, progressive);
+    return this.formatSerial(yearShort, progressive);
   }
 
   /**
@@ -125,12 +127,9 @@ class SerialGenerator {
 
     const momentDate = moment(date);
     const year = momentDate.year();
-    const month = momentDate.month() + 1;
-    const week = momentDate.isoWeek();
+    const yearShort = year % 100;
 
-    return serialData.year === year && 
-           serialData.month === month && 
-           serialData.week === week;
+    return serialData.year === yearShort;
   }
 
   /**
@@ -144,18 +143,17 @@ class SerialGenerator {
       return null;
     }
 
-    const date = moment().year(data.year).month(data.month - 1).isoWeek(data.week);
+    const fullYear = data.fullYear;
+    const currentYear = moment().year();
     
     return {
       serial,
       year: data.year,
-      month: data.month,
-      week: data.week,
+      fullYear: data.fullYear,
       progressive: data.progressive,
-      productionDate: date.format('YYYY-MM-DD'),
-      weekStart: date.startOf('isoWeek').format('YYYY-MM-DD'),
-      weekEnd: date.endOf('isoWeek').format('YYYY-MM-DD'),
-      isValid: this.validateSerialFormat(serial)
+      isCurrentYear: fullYear === currentYear,
+      isValid: this.validateSerialFormat(serial),
+      format: 'YYNNNNN'
     };
   }
 }

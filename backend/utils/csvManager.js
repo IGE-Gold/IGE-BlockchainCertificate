@@ -82,6 +82,16 @@ class CSVManager {
     }
   }
 
+  async getAllSerials() {
+    try {
+      const certificates = await this.readAllCertificates();
+      return certificates.map(cert => cert.serial);
+    } catch (error) {
+      console.error('Errore lettura seriali:', error);
+      return [];
+    }
+  }
+
   async isSerialUnique(serial) {
     try {
       const certificates = await this.readAllCertificates();

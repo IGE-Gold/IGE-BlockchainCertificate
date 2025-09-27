@@ -208,15 +208,15 @@ app.get(`${config.apiPrefix}/health`, async (req, res) => {
 // Route per generare nuovo seriale
 app.get(`${config.apiPrefix}/generate-serial`, async (req, res) => {
   try {
-    const lastSerial = await csvManager.getLastSerial();
-    const newSerial = serialGenerator.generateNextSerial(lastSerial);
+    const allSerials = await csvManager.getAllSerials();
+    const newSerial = serialGenerator.generateNextSerial(allSerials);
     
-    logger.logSerialGeneration(newSerial, lastSerial, { endpoint: '/api/generate-serial' });
+    logger.logSerialGeneration(newSerial, allSerials.length > 0 ? allSerials[allSerials.length - 1] : null, { endpoint: '/api/generate-serial' });
     
     res.json({
       success: true,
       serial: newSerial,
-      lastSerial: lastSerial,
+      totalSerials: allSerials.length,
       timestamp: new Date().toISOString()
     });
   } catch (error) {
@@ -281,7 +281,7 @@ app.post(`${config.apiPrefix}/write-certificate`, async (req, res) => {
     if (!serialGenerator.validateSerialFormat(certificateData.serial)) {
       return res.status(400).json({
         success: false,
-        error: 'Formato seriale non valido (deve essere 13 cifre numeriche)'
+        error: 'Formato seriale non valido (deve essere 7 cifre numeriche)'
       });
     }
     
@@ -348,7 +348,7 @@ app.get(`${config.apiPrefix}/certificate/:serial`, async (req, res) => {
     if (!serialGenerator.validateSerialFormat(serial)) {
       return res.status(400).json({
         success: false,
-        error: 'Formato seriale non valido'
+        error: 'Formato seriale non valido (deve essere 7 cifre numeriche)'
       });
     }
     
