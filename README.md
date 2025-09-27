@@ -5,7 +5,7 @@ A blockchain-based certificate management system for gold products, built with N
 **Author:** Giuseppe Bosi  
 **Company:** [IGE Gold S.p.A.](https://www.ige.gold/)
 
-![IGE Gold Logo](https://www.ige.gold/ige.svg)
+![IGE Gold Logo](https://raw.githubusercontent.com/IGE-Gold/IGE-BlockchainCertificate/main/frontend/public/ige.svg)
 
 > **⚠️ PROPRIETARY SOFTWARE**  
 > This software is proprietary and confidential. It is owned by **IGE Gold S.p.A.** and is intended for internal use only. Unauthorized distribution, copying, or modification is strictly prohibited.
