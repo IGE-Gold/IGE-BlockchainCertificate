@@ -202,7 +202,13 @@ The system implements a sophisticated multi-layer encoding system for secure dat
     "metal": "string",
     "fineness": "string",
     "weight": "string",
-    "production_date": "string",
+    "production_date": "YYYY-MM-DD",
+    "bar_type": "investment | custom",
+    "customization": {
+      "icon_code": "string",
+      "date": "YYYY-MM-DD",
+      "text": "string"
+    },
     "location": {
       "city": "string",
       "country": "string"
@@ -211,6 +217,34 @@ The system implements a sophisticated multi-layer encoding system for secure dat
   "disclaimer": "string"
 }
 ```
+
+## 📦 CSV Database Schema
+
+The system uses a semicolon-separated (`;`) CSV as the primary datastore. Columns are written in the exact order below. Unless specified, values are UTF-8 strings.
+
+1. `serial` (string, 7 chars) – Certificate serial number (YYNNNNN)
+2. `company` (string) – Company name
+3. `production_date` (YYYY-MM-DD) – Production date
+4. `city` (string) – City
+5. `country` (string) – Country
+6. `weight` (number as string) – Weight in grams
+7. `metal` (string) – Metal code (e.g., Au, Ag, Pt)
+8. `fineness` (string) – Fineness (e.g., 999.9‰)
+9. `tax_code` (string) – Company tax code
+10. `social_capital` (string) – Social capital
+11. `authorization` (string) – Authorization code
+12. `bar_type` (string) – `investment` or `custom`
+13. `custom_icon_code` (string) – Present if `bar_type=custom`, else empty
+14. `custom_date` (YYYY-MM-DD) – Present if `bar_type=custom`, else empty
+15. `custom_text` (string) – Present if `bar_type=custom`, else empty
+16. `blockchain_hash` (string) – Transaction hash
+17. `blockchain_link` (URL string) – Explorer link
+18. `user` (string) – User ID who created the certificate
+19. `write_date` (ISO 8601) – Backend write timestamp
+
+Notes:
+- On updates and deletes, a backup of the CSV is created automatically in `backend/backups/`.
+- Customization fields are mandatory when `bar_type=custom`; otherwise they are stored as empty strings.
 
 #### 5. **Encoding Validation & Security**
 - **Format Validation**: Multi-level validation for serial numbers and data integrity
