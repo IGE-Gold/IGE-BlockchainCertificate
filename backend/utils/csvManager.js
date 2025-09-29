@@ -3,6 +3,7 @@ const path = require('path');
 const csv = require('csv-parser');
 const createCsvWriter = require('csv-writer').createObjectCsvWriter;
 const moment = require('moment');
+const { Readable } = require('stream');
 
 class CSVManager {
   constructor(csvPath, backupPath) {
@@ -60,6 +61,29 @@ class CSVManager {
         .on('error', (error) => {
           reject(error);
         });
+    });
+  }
+
+  /**
+   * Parse CSV text content into certificate records
+   * @param {string} csvText
+   * @returns {Promise<Array<object>>}
+   */
+  async parseCSVText(csvText) {
+    return new Promise((resolve, reject) => {
+      try {
+        const records = [];
+        const readable = new Readable({ read() {} });
+        readable.push(csvText);
+        readable.push(null);
+        readable
+          .pipe(csv({ separator: this.delimiter }))
+          .on('data', (row) => records.push(row))
+          .on('end', () => resolve(records))
+          .on('error', (err) => reject(err));
+      } catch (error) {
+        reject(error);
+      }
     });
   }
 
@@ -152,6 +176,70 @@ class CSVManager {
       return true;
     } catch (error) {
       console.error('Errore scrittura certificato:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Batch write certificates in one IO pass after a single backup.
+   * Validates duplicates against existing file and within the provided batch.
+   * @param {Array<object>} newCertificates
+   */
+  async writeCertificatesBatch(newCertificates) {
+    try {
+      await this.backupCSV();
+
+      const existingCertificates = await this.readAllCertificates();
+      const existingSerials = new Set(existingCertificates.map(c => c.serial));
+
+      // Check duplicates within batch
+      const seen = new Set();
+      for (const cert of newCertificates) {
+        if (seen.has(cert.serial)) {
+          throw new Error(`Duplicated serial in batch: ${cert.serial}`);
+        }
+        seen.add(cert.serial);
+      }
+
+      // Check duplicates against existing
+      for (const cert of newCertificates) {
+        if (existingSerials.has(cert.serial)) {
+          throw new Error(`Serial already exists in DB: ${cert.serial}`);
+        }
+      }
+
+      const allCertificates = [...existingCertificates, ...newCertificates];
+
+      const csvWriter = createCsvWriter({
+        path: this.csvPath,
+        header: [
+          { id: 'serial', title: 'serial' },
+          { id: 'company', title: 'company' },
+          { id: 'production_date', title: 'production_date' },
+          { id: 'city', title: 'city' },
+          { id: 'country', title: 'country' },
+          { id: 'weight', title: 'weight' },
+          { id: 'metal', title: 'metal' },
+          { id: 'fineness', title: 'fineness' },
+          { id: 'tax_code', title: 'tax_code' },
+          { id: 'social_capital', title: 'social_capital' },
+          { id: 'authorization', title: 'authorization' },
+          { id: 'bar_type', title: 'bar_type' },
+          { id: 'custom_icon_code', title: 'custom_icon_code' },
+          { id: 'custom_date', title: 'custom_date' },
+          { id: 'custom_text', title: 'custom_text' },
+          { id: 'blockchain_hash', title: 'blockchain_hash' },
+          { id: 'blockchain_link', title: 'blockchain_link' },
+          { id: 'user', title: 'user' },
+          { id: 'write_date', title: 'write_date' }
+        ],
+        fieldDelimiter: this.delimiter
+      });
+
+      await csvWriter.writeRecords(allCertificates);
+      return true;
+    } catch (error) {
+      console.error('Errore scrittura batch certificati:', error);
       throw error;
     }
   }

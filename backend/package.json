@@ -8,20 +8,27 @@
     "dev": "nodemon server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["blockchain", "certificate", "polygon", "gold", "ethereum"],
+  "keywords": [
+    "blockchain",
+    "certificate",
+    "polygon",
+    "gold",
+    "ethereum"
+  ],
   "author": "Giuseppe Bosi",
   "license": "PROPRIETARY",
   "private": true,
   "dependencies": {
-    "express": "^4.18.2",
     "cors": "^2.8.5",
-    "dotenv": "^16.3.1",
-    "ethers": "^6.8.1",
     "csv-parser": "^3.0.0",
     "csv-writer": "^1.6.0",
-    "moment": "^2.29.4",
-    "helmet": "^7.1.0",
+    "dotenv": "^16.3.1",
+    "ethers": "^6.8.1",
+    "express": "^4.18.2",
     "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "moment": "^2.29.4",
+    "multer": "^2.0.2",
     "winston": "^3.11.0"
   },
   "devDependencies": {

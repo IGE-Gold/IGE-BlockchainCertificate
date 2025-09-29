@@ -68,6 +68,20 @@ export const apiService = {
     const response = await api.post('/write-certificate', certificateData);
     return response.data;
   },
+  // Validazione CSV massiva (multipart form-data, campo 'file')
+  async validateBulkCsv(file) {
+    const form = new FormData();
+    form.append('file', file);
+    const response = await api.post('/bulk/validate', form, {
+      headers: { 'Content-Type': 'multipart/form-data' }
+    });
+    return response.data;
+  },
+  // Scrittura massiva certificati: accetta array di certificati validati
+  async writeBulk(certificates) {
+    const response = await api.post('/bulk/write', { certificates });
+    return response.data;
+  },
 
   // Verifica certificato
   async getCertificate(serial) {

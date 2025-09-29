@@ -141,6 +141,7 @@ The frontend requires API connection settings. Copy `frontend/env.example` to `f
 6. **Auto-expanding Display**: Certificate data shows without scrollbars
 7. **Professional UI**: Modern dark theme with responsive design
 8. **Real-time Validation**: Instant serial number validation
+9. **Bulk Import**: Validate and write certificates from CSV
 
 ## 🔢 Serial Number System
 
@@ -245,6 +246,40 @@ The system uses a semicolon-separated (`;`) CSV as the primary datastore. Column
 Notes:
 - On updates and deletes, a backup of the CSV is created automatically in `backend/backups/`.
 - Customization fields are mandatory when `bar_type=custom`; otherwise they are stored as empty strings.
+
+## 📥 Bulk Import (CSV)
+
+Author: Giuseppe Bosi
+
+The system supports bulk validation and writing of certificates from a CSV file. The CSV must be UTF-8 and semicolon `;` separated with headers:
+
+- Required: `serial, company, production_date, city, country, weight, metal, fineness, tax_code, social_capital, authorization, user, bar_type`
+- When `bar_type=custom`: `custom_icon_code, custom_date (YYYY-MM-DD), custom_text`
+- Output (set by backend after write): `blockchain_hash, blockchain_link, write_date`
+
+Flow:
+1. Validate CSV via API to detect per-row issues before writing
+2. If there are 0 invalid rows, trigger the bulk write
+
+Backend APIs:
+- POST `{API_PREFIX}/bulk/validate` (multipart/form-data, field `file`)
+  - Response: `{ success, summary: { totalRows, validRows, invalidRows }, errors: [ { row, serial, errors[] } ] }`
+- POST `{API_PREFIX}/bulk/write` (application/json)
+  - Body: `{ certificates: Array<Certificate> }`
+  - Response: `{ success, summary: { requested, written, failed }, results: [ { index, serial, success, blockchainHash?, errors? } ] }`
+
+Frontend:
+- Navigate to `#/bulk` to upload and validate a CSV, then execute the write for valid rows.
+
+Validation rules:
+- Serial: 7 numeric digits, unique within CSV and not existing in DB
+- Required fields must be non-empty
+- `bar_type`: `investment` or `custom`
+- If `custom`: `custom_icon_code` (<=20), `custom_date` (past or current), `custom_text` (<=120)
+
+Notes:
+- On bulk write, each successful row is written to blockchain first; then all successful rows are appended to CSV in a single IO with automatic backup.
+- Errors are reported per row; successful rows are not blocked by failures in other rows.
 
 #### 5. **Encoding Validation & Security**
 - **Format Validation**: Multi-level validation for serial numbers and data integrity

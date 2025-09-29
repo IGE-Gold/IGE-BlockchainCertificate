@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react
 import './styles/App.css';
 import { testConnection } from './services/api';
 import CertificateForm from './components/CertificateForm';
+import BulkImport from './components/BulkImport';
 import CertificateList from './components/CertificateList';
 import CertificateVerification from './components/CertificateVerification';
 import Stats from './components/Stats';
@@ -20,6 +21,7 @@ const Header = ({ onLogout }) => {
     { path: '/create', label: 'Crea Certificato', icon: FileText },
     { path: '/verify', label: 'Verifica', icon: Search },
     { path: '/list', label: 'Lista', icon: FileText },
+    { path: '/bulk', label: 'Import Massivo', icon: Database },
     { path: '/editor', label: 'Editor CSV', icon: Database },
     { path: '/stats', label: 'Statistiche', icon: BarChart3 }
   ];
@@ -108,6 +110,12 @@ const HomePage = () => {
       title: 'Lista Certificati',
       description: 'Visualizza e gestisci tutti i certificati creati',
       link: '/list'
+    },
+    {
+      icon: Database,
+      title: 'Import Massivo',
+      description: 'Valida e registra certificati da file CSV',
+      link: '/bulk'
     },
     {
       icon: Database,
@@ -282,7 +290,8 @@ const App = () => {
         <Header onLogout={handleLogout} />
         <Routes>
           <Route path="/" element={<HomePage />} />
-          <Route path="/create" element={<CertificateForm />} />
+        <Route path="/create" element={<CertificateForm />} />
+        <Route path="/bulk" element={<BulkImport />} />
           <Route path="/verify" element={<CertificateVerification />} />
           <Route path="/list" element={<CertificateList />} />
           <Route path="/editor" element={<CsvEditor />} />

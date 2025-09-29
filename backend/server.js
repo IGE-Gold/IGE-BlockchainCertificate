@@ -98,6 +98,21 @@ const blockchainManager = new BlockchainManager(
   config.explorerBaseUrl
 );
 const usersManager = new UsersManager(config.usersCsvPath, config.csvDelimiter, config.csvEncoding);
+const multer = require('multer');
+const upload = multer({
+  limits: { fileSize: config.maxFileSize },
+  fileFilter: (req, file, cb) => {
+    const allowed = (config.allowedFileTypes || []).map(t => t.trim().toLowerCase());
+    const mimetype = (file.mimetype || '').toLowerCase();
+    if (allowed.length === 0 || allowed.includes(mimetype) || file.originalname.toLowerCase().endsWith('.csv')) {
+      return cb(null, true);
+    }
+    cb(new Error('Tipo file non consentito'));
+  }
+});
+
+// Lock in-memory per evitare scritture multiple simultanee
+let bulkWriteInProgress = false;
 
 // Inizializza Express
 const app = express();
@@ -391,6 +406,223 @@ app.post(`${config.apiPrefix}/write-certificate`, async (req, res) => {
       error: error.message,
       timestamp: new Date().toISOString()
     });
+  }
+});
+
+// Validazione CSV massiva (upload CSV) - restituisce dettagli errori per riga
+app.post(`${config.apiPrefix}/bulk/validate`, upload.single('file'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ success: false, error: 'File CSV richiesto (campo file)' });
+    }
+
+    const csvText = req.file.buffer.toString(config.csvEncoding);
+    const rows = await csvManager.parseCSVText(csvText);
+
+    const requiredFields = ['serial', 'company', 'production_date', 'city', 'country', 'weight', 'metal', 'fineness', 'tax_code', 'social_capital', 'authorization', 'user', 'bar_type'];
+    const existingSerials = new Set((await csvManager.getAllSerials()));
+    const users = await usersManager.readAllUsers();
+    const validUserIds = new Set(users.map(u => String(u.id)));
+    const seenInBatch = new Set();
+
+    const errors = [];
+
+    rows.forEach((row, index) => {
+      const rowNumber = index + 2; // +1 header, +1 base index
+      const rowErrors = [];
+
+      // Missing fields
+      const missing = requiredFields.filter(f => !(row[f] && String(row[f]).trim() !== ''));
+      if (missing.length > 0) {
+        rowErrors.push(`Campi mancanti: ${missing.join(', ')}`);
+      }
+
+      const serial = String(row.serial || '').trim();
+      if (!serialGenerator.validateSerialFormat(serial)) {
+        rowErrors.push('Formato seriale non valido (7 cifre)');
+      }
+      if (seenInBatch.has(serial)) {
+        rowErrors.push('Seriale duplicato nel CSV');
+      }
+      if (existingSerials.has(serial)) {
+        rowErrors.push('Seriale già presente nel database');
+      }
+
+      const barType = String(row.bar_type || '').toLowerCase();
+      if (!['investment', 'custom'].includes(barType)) {
+        rowErrors.push('bar_type deve essere investment o custom');
+      }
+      if (barType === 'custom') {
+        const customMissing = ['custom_icon_code', 'custom_date', 'custom_text'].filter(f => !(row[f] && String(row[f]).trim() !== ''));
+        if (customMissing.length > 0) {
+          rowErrors.push(`Campi custom mancanti: ${customMissing.join(', ')}`);
+        }
+        if (String(row.custom_icon_code || '').length > 20) {
+          rowErrors.push('custom_icon_code troppo lungo (max 20)');
+        }
+        const cd = new Date(row.custom_date);
+        if (isNaN(cd.getTime()) || cd > new Date()) {
+          rowErrors.push('custom_date non valido o futuro');
+        }
+        if (String(row.custom_text || '').length > 120) {
+          rowErrors.push('custom_text troppo lungo (max 120)');
+        }
+      }
+
+      const userId = String(row.user || '').trim();
+      if (!validUserIds.has(userId)) {
+        rowErrors.push('user non valido: user_id inesistente');
+      }
+
+      if (rowErrors.length > 0) {
+        errors.push({ row: rowNumber, serial: serial || null, errors: rowErrors });
+      } else {
+        seenInBatch.add(serial);
+      }
+    });
+
+    const summary = {
+      totalRows: rows.length,
+      validRows: rows.length - errors.length,
+      invalidRows: errors.length
+    };
+
+    return res.json({ success: true, summary, errors });
+  } catch (error) {
+    logger.logError(error, { endpoint: '/api/bulk/validate' });
+    return res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+// Scrittura massiva: esegue blockchain + CSV per ogni riga valida in input JSON
+app.post(`${config.apiPrefix}/bulk/write`, async (req, res) => {
+  try {
+    if (bulkWriteInProgress) {
+      return res.status(429).json({ success: false, error: 'Operazione di scrittura massiva già in corso' });
+    }
+    bulkWriteInProgress = true;
+    const { certificates } = req.body || {};
+    if (!Array.isArray(certificates) || certificates.length === 0) {
+      return res.status(400).json({ success: false, error: 'Array certificates richiesto e non vuoto' });
+    }
+
+    const requiredFields = ['serial', 'company', 'production_date', 'city', 'country', 'weight', 'metal', 'fineness', 'tax_code', 'social_capital', 'authorization', 'user', 'bar_type'];
+    const existingSerials = new Set((await csvManager.getAllSerials()));
+    const users = await usersManager.readAllUsers();
+    const validUserIds = new Set(users.map(u => String(u.id)));
+    const seenInBatch = new Set();
+
+    const results = [];
+    const toPersist = [];
+
+    // Prima passata: validazione completa. Se una riga fallisce, non procedere alla scrittura
+    for (let i = 0; i < certificates.length; i++) {
+      const row = certificates[i];
+      const rowNumber = i + 1;
+      const rowErrors = [];
+
+      const missing = requiredFields.filter(f => !(row[f] && String(row[f]).trim() !== ''));
+      if (missing.length > 0) rowErrors.push(`Campi mancanti: ${missing.join(', ')}`);
+
+      const serial = String(row.serial || '').trim();
+      if (!serialGenerator.validateSerialFormat(serial)) rowErrors.push('Formato seriale non valido (7 cifre)');
+      if (seenInBatch.has(serial)) rowErrors.push('Seriale duplicato nel payload');
+      if (existingSerials.has(serial)) rowErrors.push('Seriale già presente nel database');
+
+      const barType = String(row.bar_type || '').toLowerCase();
+      if (!['investment', 'custom'].includes(barType)) rowErrors.push('bar_type deve essere investment o custom');
+      if (barType === 'custom') {
+        const customMissing = ['custom_icon_code', 'custom_date', 'custom_text'].filter(f => !(row[f] && String(row[f]).trim() !== ''));
+        if (customMissing.length > 0) rowErrors.push(`Campi custom mancanti: ${customMissing.join(', ')}`);
+        if (String(row.custom_icon_code || '').length > 20) rowErrors.push('custom_icon_code troppo lungo (max 20)');
+        const cd = new Date(row.custom_date);
+        if (isNaN(cd.getTime()) || cd > new Date()) rowErrors.push('custom_date non valido o futuro');
+        if (String(row.custom_text || '').length > 120) rowErrors.push('custom_text troppo lungo (max 120)');
+      }
+
+      const userId = String(row.user || '').trim();
+      if (!validUserIds.has(userId)) rowErrors.push('user non valido: user_id inesistente');
+
+      if (rowErrors.length > 0) {
+        results.push({ index: rowNumber, serial: serial || null, success: false, errors: rowErrors });
+      } else {
+        // segna serial valido per la validazione intra-batch
+        seenInBatch.add(serial);
+        results.push({ index: rowNumber, serial, success: true, pending: true });
+      }
+    }
+
+    const hasValidationErrors = results.some(r => !r.success);
+    if (hasValidationErrors) {
+      bulkWriteInProgress = false;
+      return res.status(400).json({ success: false, summary: { requested: certificates.length, written: 0, failed: results.filter(r => !r.success).length }, results });
+    }
+
+    // Seconda passata: scrittura su blockchain. Se una riga fallisce, interrompi e non persistere su CSV
+    for (let i = 0; i < certificates.length; i++) {
+      const row = certificates[i];
+      const rowNumber = i + 1;
+      const serial = String(row.serial || '').trim();
+
+      const barType = String(row.bar_type || '').toLowerCase();
+      if (barType !== 'custom') {
+        row.custom_icon_code = '';
+        row.custom_date = '';
+        row.custom_text = '';
+      }
+
+      // ready to write on-chain
+      try {
+        const payload = { ...row, write_date: new Date().toISOString() };
+        const bc = await blockchainManager.writeCertificate(payload);
+        payload.blockchain_hash = bc.transactionHash;
+        payload.blockchain_link = bc.explorerLink;
+        toPersist.push(payload);
+        // aggiorna risultato esistente
+        const r = results.find(x => x.index === rowNumber);
+        if (r) {
+          r.success = true;
+          r.pending = false;
+          r.blockchainHash = bc.transactionHash;
+          r.blockchainLink = bc.explorerLink;
+        }
+      } catch (bcErr) {
+        const r = results.find(x => x.index === rowNumber);
+        if (r) {
+          r.success = false;
+          r.pending = false;
+          r.errors = [`Errore blockchain: ${bcErr.message}`];
+        } else {
+          results.push({ index: rowNumber, serial, success: false, errors: [`Errore blockchain: ${bcErr.message}`] });
+        }
+        // interruzione immediata: non persistere su CSV e restituisci esito
+        const summary = {
+          requested: certificates.length,
+          written: 0,
+          failed: results.filter(rr => rr.success === false).length
+        };
+        bulkWriteInProgress = false;
+        return res.status(500).json({ success: false, summary, results });
+      }
+    }
+
+    // Persist successful ones in CSV in one shot
+    if (toPersist.length > 0) {
+      await csvManager.writeCertificatesBatch(toPersist);
+    }
+
+    const summary = {
+      requested: certificates.length,
+      written: toPersist.length,
+      failed: results.filter(r => !r.success).length
+    };
+
+    bulkWriteInProgress = false;
+    return res.json({ success: true, summary, results });
+  } catch (error) {
+    logger.logError(error, { endpoint: '/api/bulk/write' });
+    bulkWriteInProgress = false;
+    return res.status(500).json({ success: false, error: error.message });
   }
 });
 

@@ -1,0 +1,4 @@
+serial;company;production_date;city;country;weight;metal;fineness;tax_code;social_capital;authorization;bar_type;custom_icon_code;custom_date;custom_text;blockchain_hash;blockchain_link;user;write_date
+2500041;IGE Gold S.P.A.;2025-09-25;Arezzo;Italy;1000;Au;999.9‰;02488190519;€1,000,000 I.V.;REG. OAM - OPO38;investment;;;;;;User_001;
+2500042;IGE Gold S.P.A.;2025-09-25;Arezzo;Italy;500;Au;999.9‰;02488190519;€1,000,000 I.V.;REG. OAM - OPO38;investment;;;;;;User_001;
+2500043;IGE Gold S.P.A.;2025-09-24;Arezzo;Italy;250;Au;999.9‰;02488190519;€1,000,000 I.V.;REG. OAM - OPO38;custom;ICON123;2025-09-20;Limited edition;;;User_001;
