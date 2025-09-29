@@ -48,5 +48,5 @@ echo.
 echo Backend:  http://localhost:3001
 echo Frontend: http://localhost:3000
 echo.
-echo Premi un tasto per chiudere questa finestra...
-pause >nul
+
+

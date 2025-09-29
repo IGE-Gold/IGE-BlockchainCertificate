@@ -2,16 +2,20 @@ import axios from 'axios';
 
 // Configurazione API
 const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
-const API_TOKEN = process.env.REACT_APP_API_TOKEN || '19111976';
+const API_TOKEN = process.env.REACT_APP_API_TOKEN || '';
 
 // Crea istanza axios con configurazione di base
+const baseHeaders = {
+  'Content-Type': 'application/json'
+};
+if (API_TOKEN) {
+  baseHeaders['Authorization'] = `Bearer ${API_TOKEN}`;
+}
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   timeout: 30000, // 30 secondi timeout
-  headers: {
-    'Content-Type': 'application/json',
-    'Authorization': `Bearer ${API_TOKEN}`
-  }
+  headers: baseHeaders
 });
 
 // Interceptor per gestire errori

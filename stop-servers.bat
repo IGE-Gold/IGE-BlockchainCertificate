@@ -17,5 +17,4 @@ echo ========================================
 echo  ✓ SERVER FERMATI!
 echo ========================================
 echo.
-echo Premi un tasto per chiudere questa finestra...
-pause >nul
+

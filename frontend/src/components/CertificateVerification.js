@@ -90,7 +90,7 @@ const CertificateVerification = () => {
                   value={serial}
                   onChange={(e) => setSerial(e.target.value)}
                   className="form-input"
-                  placeholder="AANNNNN"
+                  placeholder="NNNNNNN"
                   maxLength="7"
                   required
                 />
