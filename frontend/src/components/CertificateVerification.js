@@ -83,15 +83,15 @@ const CertificateVerification = () => {
 
           <form onSubmit={handleSubmit} className="mb-4">
             <div className="form-group">
-              <label className="form-label">Numero Seriale (13 cifre)</label>
+              <label className="form-label">Numero Seriale (7 cifre)</label>
               <div className="flex gap-2">
                 <input
                   type="text"
                   value={serial}
                   onChange={(e) => setSerial(e.target.value)}
                   className="form-input"
-                  placeholder="YYYYMMWWNNNNN"
-                  maxLength="13"
+                  placeholder="AANNNNN"
+                  maxLength="7"
                   required
                 />
                 <button
@@ -183,6 +183,35 @@ const CertificateVerification = () => {
                       <span className="text-gray-400">Metallo:</span>
                       <span className="font-medium">{result.certificate.metal} {result.certificate.fineness}</span>
                     </div>
+                    {/* Bar Type + Custom Fields (da CSV) */}
+                    {result.certificate.bar_type && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-400">Bar Type:</span>
+                        <span className="font-medium">{String(result.certificate.bar_type).toUpperCase()}</span>
+                      </div>
+                    )}
+                    {String(result.certificate.bar_type || '').toLowerCase() === 'custom' && (
+                      <>
+                        {result.certificate.custom_icon_code && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Custom Icon Code:</span>
+                            <span className="font-medium">{result.certificate.custom_icon_code}</span>
+                          </div>
+                        )}
+                        {result.certificate.custom_date && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Custom Date:</span>
+                            <span className="font-medium">{result.certificate.custom_date}</span>
+                          </div>
+                        )}
+                        {result.certificate.custom_text && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-400">Custom Text:</span>
+                            <span className="font-medium">{result.certificate.custom_text}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
                     <div className="flex justify-between">
                       <span className="text-gray-400">Utente:</span>
                       <span className="font-medium">{result.certificate.user}</span>

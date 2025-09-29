@@ -36,8 +36,7 @@ This document describes all environment variables required for the backend confi
 - `RATE_LIMIT_MAX_REQUESTS` - Maximum requests per window
 
 ### Authentication
-- `LOGIN_USERNAME` - Frontend login username
-- `LOGIN_PASSWORD` - Frontend login password
+- `USERS_CSV_PATH` - Path to users CSV file (default: backend/data/users.csv)
 
 ## Setup Instructions
 

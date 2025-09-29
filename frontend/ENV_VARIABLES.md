@@ -14,8 +14,9 @@ This document describes all environment variables required for the frontend conf
 - `REACT_APP_DEBUG` - Debug mode flag (true/false)
 
 ### Authentication
-- `REACT_APP_LOGIN_USERNAME` - Login username for frontend access
-- `REACT_APP_LOGIN_PASSWORD` - Login password for frontend access
+Login is now handled by backend via CSV users list. The following variables are deprecated and no longer used:
+- `REACT_APP_LOGIN_USERNAME`
+- `REACT_APP_LOGIN_PASSWORD`
 
 ## Setup Instructions
 

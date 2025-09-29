@@ -36,6 +36,11 @@ api.interceptors.response.use(
 
 // Servizi API
 export const apiService = {
+  // Login via CSV (no token richiesto)
+  async login(username, password) {
+    const response = await axios.post(`${API_BASE_URL}/login`, { username, password });
+    return response.data;
+  },
   // Health check (senza autenticazione)
   async healthCheck() {
     const response = await axios.get(`${API_BASE_URL}/health`);

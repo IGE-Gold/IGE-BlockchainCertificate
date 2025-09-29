@@ -151,6 +151,12 @@ class BlockchainManager {
         fineness: certificateData.fineness,
         weight: certificateData.weight,
         production_date: certificateData.production_date,
+        bar_type: certificateData.bar_type || 'investment',
+        customization: (certificateData.bar_type || '').toLowerCase() === 'custom' ? {
+          icon_code: certificateData.custom_icon_code || '',
+          date: certificateData.custom_date || '',
+          text: certificateData.custom_text || ''
+        } : undefined,
         location: {
           city: certificateData.city,
           country: certificateData.country
@@ -271,6 +277,17 @@ class BlockchainManager {
       message += `Fineness: ${certificateData.product.fineness}\n`;
       message += `Weight: ${certificateData.product.weight} grams\n`;
       message += `Production Date: ${certificateData.product.production_date}\n`;
+      if (certificateData.product.bar_type) {
+        const barType = String(certificateData.product.bar_type).toUpperCase();
+        message += `Bar Type: ${barType}\n`;
+      }
+      if (certificateData.product.customization) {
+        const cz = certificateData.product.customization;
+        message += `Customization:\n`;
+        if (cz.icon_code) message += `  Icon Code: ${cz.icon_code}\n`;
+        if (cz.date) message += `  Date: ${cz.date}\n`;
+        if (cz.text) message += `  Text: ${cz.text}\n`;
+      }
       if (certificateData.product.location) {
         message += `Location: ${certificateData.product.location.city}, ${certificateData.product.location.country}\n`;
       }

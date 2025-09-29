@@ -13,6 +13,7 @@ import { FileText, Search, BarChart3, Home, Database } from 'lucide-react';
 // Componente Header
 const Header = ({ onLogout }) => {
   const location = useLocation();
+  const username = sessionStorage.getItem('ige_username') || '';
   
   const navItems = [
     { path: '/', label: 'Home', icon: Home },
@@ -45,6 +46,12 @@ const Header = ({ onLogout }) => {
                 {label}
               </Link>
             ))}
+            {username && (
+              <div className="nav-link" style={{ opacity: 0.9 }}>
+                <span style={{ marginRight: '0.5rem', color: '#9ca3af' }}>User:</span>
+                <strong>{username}</strong>
+              </div>
+            )}
             <button
               onClick={onLogout}
               className="nav-link logout-btn"
@@ -239,7 +246,7 @@ const App = () => {
 
   // Controlla se l'utente è già autenticato
   useEffect(() => {
-    const authStatus = localStorage.getItem('ige_gold_auth');
+    const authStatus = sessionStorage.getItem('ige_gold_auth');
     if (authStatus === 'true') {
       setIsAuthenticated(true);
     }
@@ -247,13 +254,21 @@ const App = () => {
 
   const handleLogin = (success) => {
     if (success) {
-      localStorage.setItem('ige_gold_auth', 'true');
+      sessionStorage.setItem('ige_gold_auth', 'true');
+      // no-op: user id già salvato da Login
       setIsAuthenticated(true);
     }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('ige_gold_auth');
+    try {
+      localStorage.removeItem('ige_gold_auth');
+      localStorage.removeItem('ige_user_id');
+      localStorage.removeItem('ige_username');
+    } catch (_) {}
+    sessionStorage.removeItem('ige_gold_auth');
+    sessionStorage.removeItem('ige_user_id');
+    sessionStorage.removeItem('ige_username');
     setIsAuthenticated(false);
   };
 

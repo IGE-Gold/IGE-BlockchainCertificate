@@ -9,12 +9,16 @@ const CertificateForm = () => {
     production_date: new Date().toISOString().split('T')[0],
     city: 'Arezzo',
     country: 'Italy',
-    weight: '500',
+    weight: '',
     metal: 'Au',
     fineness: '999.9‰',
     tax_code: '02488190519',
     social_capital: '€1,000,000 I.V.',
     authorization: 'REG. OAM - OPO38',
+    bar_type: 'investment',
+    custom_icon_code: '',
+    custom_date: '',
+    custom_text: '',
     user: ''
   });
 
@@ -68,9 +72,17 @@ const CertificateForm = () => {
     }
   }, [formData.serial]);
 
+  // All'avvio, popola user con ID login e blocca edit
+  useEffect(() => {
+    const userId = sessionStorage.getItem('ige_user_id') || '';
+    setFormData(prev => ({ ...prev, user: userId }));
+  }, []);
+
   // Gestisce cambiamenti form
   const handleChange = (e) => {
     const { name, value } = e.target;
+    // Consenti edit di serial, weight, bar_type e campi custom
+    if (!['serial', 'weight', 'bar_type', 'custom_icon_code', 'custom_date', 'custom_text'].includes(name)) return;
     setFormData(prev => ({ ...prev, [name]: value }));
     setError(null);
     setResult(null);
@@ -244,12 +256,12 @@ const CertificateForm = () => {
                 )}
                 </div>
                 <div className="form-group">
-                  <label className="form-label">Utente</label>
+                  <label className="form-label">Utente (ID)</label>
                   <input
                     type="text"
                     name="user"
                     value={formData.user}
-                    onChange={handleChange}
+                    readOnly
                     className="form-input"
                     required
                   />
@@ -267,7 +279,7 @@ const CertificateForm = () => {
                     type="text"
                     name="company"
                     value={formData.company}
-                    onChange={handleChange}
+                    readOnly
                     className="form-input"
                     required
                   />
@@ -278,7 +290,7 @@ const CertificateForm = () => {
                     type="text"
                     name="tax_code"
                     value={formData.tax_code}
-                    onChange={handleChange}
+                    readOnly
                     className="form-input"
                     required
                   />
@@ -291,7 +303,7 @@ const CertificateForm = () => {
                     type="text"
                     name="social_capital"
                     value={formData.social_capital}
-                    onChange={handleChange}
+                    readOnly
                     className="form-input"
                     required
                   />
@@ -302,7 +314,7 @@ const CertificateForm = () => {
                     type="text"
                     name="authorization"
                     value={formData.authorization}
-                    onChange={handleChange}
+                    readOnly
                     className="form-input"
                     required
                   />
@@ -320,7 +332,7 @@ const CertificateForm = () => {
                     type="date"
                     name="production_date"
                     value={formData.production_date}
-                    onChange={handleChange}
+                    readOnly
                     className="form-input"
                     required
                   />
@@ -331,7 +343,7 @@ const CertificateForm = () => {
                     type="text"
                     name="city"
                     value={formData.city}
-                    onChange={handleChange}
+                    readOnly
                     className="form-input"
                     required
                   />
@@ -342,7 +354,7 @@ const CertificateForm = () => {
                     type="text"
                     name="country"
                     value={formData.country}
-                    onChange={handleChange}
+                    readOnly
                     className="form-input"
                     required
                   />
@@ -365,7 +377,7 @@ const CertificateForm = () => {
                   <select
                     name="metal"
                     value={formData.metal}
-                    onChange={handleChange}
+                    disabled
                     className="form-select"
                     required
                   >
@@ -380,12 +392,72 @@ const CertificateForm = () => {
                     type="text"
                     name="fineness"
                     value={formData.fineness}
-                    onChange={handleChange}
+                    readOnly
                     className="form-input"
                     required
                   />
                 </div>
               </div>
+              <div className="form-row-3">
+                <div className="form-group">
+                  <label className="form-label">Bar Type</label>
+                  <select
+                    name="bar_type"
+                    value={formData.bar_type}
+                    onChange={handleChange}
+                    className="form-select"
+                    required
+                  >
+                    <option value="investment">Investment</option>
+                    <option value="custom">Custom (Gift Bar)</option>
+                  </select>
+                </div>
+                {formData.bar_type === 'custom' && (
+                  <>
+                    <div className="form-group">
+                      <label className="form-label">Custom Icon Code</label>
+                      <input
+                        type="text"
+                        name="custom_icon_code"
+                        value={formData.custom_icon_code}
+                        onChange={handleChange}
+                        className="form-input"
+                        placeholder="Enter icon code"
+                        maxLength="20"
+                        required
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Custom Date</label>
+                      <input
+                        type="date"
+                        name="custom_date"
+                        value={formData.custom_date}
+                        onChange={handleChange}
+                        className="form-input"
+                        required
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
+              {formData.bar_type === 'custom' && (
+                <div className="form-row">
+                  <div className="form-group" style={{ flex: 1 }}>
+                    <label className="form-label">Custom Text</label>
+                    <input
+                      type="text"
+                      name="custom_text"
+                      value={formData.custom_text}
+                      onChange={handleChange}
+                      className="form-input"
+                      placeholder="Enter personalization text"
+                      maxLength="120"
+                      required
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Bottoni */}

@@ -125,10 +125,11 @@ The frontend requires API connection settings. Copy `frontend/env.example` to `f
 - **Backend API**: http://localhost:3001
 - **API Health**: http://localhost:3001/api/health
 
-### Default Credentials
+### Login
 
-- **Username**: 1234567890
-- **Password**: 0987654321
+- Login is validated against the backend `users.csv` (semicolon `;` separator)
+- Usernames are case-sensitive
+- Session is stored in `sessionStorage` and ends when the browser closes
 
 ### Main Features
 
@@ -246,113 +247,24 @@ Certificates are stored on-chain with the following structure:
   "type": "GOLD_CERTIFICATE",
   "version": "1.0",
   "serial": "certificate_serial",
-  "company": { "name": "...", "tax_code": "..." },
-  "product": { "metal": "...", "weight": "...", "location": {...} },
-  "disclaimer": "Blockchain authentication notice"
+  "company": { "name": "...", "tax_code": "...", "social_capital": "...", "authorization": "..." },
+  "product": {
+    "metal": "...",
+    "fineness": "...",
+    "weight": "...",
+    "production_date": "YYYY-MM-DD",
+    "bar_type": "investment | custom",
+    "customization": {
+      "icon_code": "...",
+      "date": "YYYY-MM-DD",
+      "text": "..."
+    },
+    "location": { "city": "...", "country": "..." }
+  },
+  "disclaimer": "..."
 }
 ```
 
 ## 📁 Project Structure
 
 ```
-IGE-BlockchainCertificate/
-├── backend/                 # Node.js backend
-│   ├── utils/              # Utility modules
-│   ├── logs/               # Application logs
-│   ├── .env                # Backend configuration
-│   └── server.js           # Main server file
-├── frontend/               # React frontend
-│   ├── src/
-│   │   ├── components/     # React components
-│   │   ├── services/       # API services
-│   │   └── styles/         # CSS styles
-│   └── .env                # Frontend configuration
-├── data/                   # CSV database
-├── backups/                # CSV backups
-├── Screenshots/            # Application screenshots
-│   ├── IGE Blockchain Certificate (1).png
-│   ├── IGE Blockchain Certificate (2).png
-│   ├── IGE Blockchain Certificate (3).png
-│   ├── IGE Blockchain Certificate (4).png
-│   ├── IGE Blockchain Certificate (5).png
-│   ├── IGE Blockchain Certificate (6).png
-│   └── IGE Blockchain Certificate (7).png
-└── README.md               # This file
-```
-
-## 🔒 Security
-
-- **Private Keys**: Never commit private keys to version control
-- **Environment Files**: Keep `.env` files secure and local
-- **API Tokens**: Use strong, unique authentication tokens
-- **HTTPS**: Use HTTPS in production environments
-
-## 🐛 Troubleshooting
-
-### Common Issues
-
-1. **Blockchain Connection Failed**
-   - Check your private key format
-   - Verify RPC URL is accessible
-   - Ensure you have testnet MATIC
-
-2. **API Authentication Error**
-   - Verify API_TOKEN matches between frontend and backend
-   - Check CORS configuration
-
-3. **CSV File Errors**
-   - Ensure data directory exists
-   - Check file permissions
-   - Verify CSV format
-
-### Logs
-
-- **Backend Logs**: `backend/logs/`
-- **Application Logs**: `backend/logs/app.log`
-- **Error Logs**: `backend/logs/error.log`
-- **Blockchain Logs**: `backend/logs/blockchain.log`
-
-## 📝 API Documentation
-
-### Endpoints
-
-- `GET /api/health` - System health check
-- `POST /api/generate-serial` - Generate new serial number
-- `POST /api/validate-serial` - Validate serial number
-- `POST /api/write-certificate` - Create new certificate
-- `GET /api/certificate/:serial` - Get certificate details
-- `GET /api/certificates` - List all certificates
-- `GET /api/stats` - System statistics
-
-### Authentication
-
-All API requests require authentication via:
-- Header: `Authorization: Bearer <token>`
-- Query parameter: `?token=<token>`
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
-
-## 📄 License & Copyright
-
-**© 2025 IGE Gold S.p.A. All rights reserved.**
-
-This software is proprietary and confidential. It is owned by [IGE Gold S.p.A.](https://www.ige.gold/) and is intended for internal use only. No part of this software may be reproduced, distributed, or transmitted in any form or by any means without the prior written permission of IGE Gold S.p.A.
-
-**Unauthorized use, copying, or distribution is strictly prohibited and may result in legal action.**
-
-## 📞 Support
-
-For support and questions:
-- Check the troubleshooting section
-- Review the environment variable documentation
-- Check the application logs for error details
-
----
-
-**IGE Gold Certificate System** - Secure, blockchain-authenticated gold product certification by [IGE Gold S.p.A.](https://www.ige.gold/)

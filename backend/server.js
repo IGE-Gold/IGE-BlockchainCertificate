@@ -2,12 +2,14 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
 require('dotenv').config();
 
 const CSVManager = require('./utils/csvManager');
 const SerialGenerator = require('./utils/serialGenerator');
 const BlockchainManager = require('./utils/blockchainManager');
 const Logger = require('./utils/logger');
+const UsersManager = require('./utils/usersManager');
 
 // Configurazione - TUTTE le variabili devono essere nel file .env
 const config = {
@@ -51,6 +53,7 @@ const config = {
   // Database
   csvDelimiter: process.env.CSV_DELIMITER,
   csvEncoding: process.env.CSV_ENCODING,
+  usersCsvPath: process.env.USERS_CSV_PATH || path.join(__dirname, 'data', 'users.csv'),
   
   // Backup
   backupRetentionDays: parseInt(process.env.BACKUP_RETENTION_DAYS),
@@ -94,6 +97,7 @@ const blockchainManager = new BlockchainManager(
   config.chainId,
   config.explorerBaseUrl
 );
+const usersManager = new UsersManager(config.usersCsvPath, config.csvDelimiter, config.csvEncoding);
 
 // Inizializza Express
 const app = express();
@@ -152,7 +156,7 @@ const authenticateToken = (req, res, next) => {
 
 // Applica autenticazione a tutti gli endpoint API tranne health check
 app.use(`${config.apiPrefix}`, (req, res, next) => {
-  if (req.path === '/health') {
+  if (req.path === '/health' || req.path === '/login') {
     return next(); // Salta autenticazione per health check
   }
   return authenticateToken(req, res, next);
@@ -202,6 +206,27 @@ app.get(`${config.apiPrefix}/health`, async (req, res) => {
       success: false,
       error: 'Errore health check'
     });
+  }
+});
+
+// Route di login utente via CSV (no token)
+app.post(`${config.apiPrefix}/login`, async (req, res) => {
+  try {
+    const { username, password } = req.body || {};
+    if (!username || !password) {
+      return res.status(400).json({ success: false, error: 'Username e password richiesti' });
+    }
+    if (String(password).length < 6) {
+      return res.status(400).json({ success: false, error: 'Password troppo corta (min 6 caratteri)' });
+    }
+    const user = await usersManager.validateCredentials(username, password);
+    if (!user) {
+      return res.status(401).json({ success: false, error: 'Credenziali non valide' });
+    }
+    return res.json({ success: true, user, timestamp: new Date().toISOString() });
+  } catch (error) {
+    logger.logError(error, { endpoint: '/api/login' });
+    return res.status(500).json({ success: false, error: 'Errore login' });
   }
 });
 
@@ -267,7 +292,7 @@ app.post(`${config.apiPrefix}/write-certificate`, async (req, res) => {
     const certificateData = req.body;
     
     // Validazione dati obbligatori
-    const requiredFields = ['serial', 'company', 'production_date', 'city', 'country', 'weight', 'metal', 'fineness', 'tax_code', 'social_capital', 'authorization', 'user'];
+    const requiredFields = ['serial', 'company', 'production_date', 'city', 'country', 'weight', 'metal', 'fineness', 'tax_code', 'social_capital', 'authorization', 'user', 'bar_type'];
     const missingFields = requiredFields.filter(field => !certificateData[field]);
     
     if (missingFields.length > 0) {
@@ -294,6 +319,35 @@ app.post(`${config.apiPrefix}/write-certificate`, async (req, res) => {
       });
     }
     
+    // Validazione bar_type e campi custom
+    const barType = String(certificateData.bar_type || '').toLowerCase();
+    if (!['investment', 'custom'].includes(barType)) {
+      return res.status(400).json({ success: false, error: 'bar_type must be either "investment" or "custom"' });
+    }
+    if (barType === 'custom') {
+      const customMissing = ['custom_icon_code', 'custom_date', 'custom_text']
+        .filter(f => !certificateData[f]);
+      if (customMissing.length > 0) {
+        return res.status(400).json({ success: false, error: `Missing custom fields: ${customMissing.join(', ')}` });
+      }
+      // Validazioni di base
+      if (String(certificateData.custom_icon_code).length > 20) {
+        return res.status(400).json({ success: false, error: 'custom_icon_code too long (max 20 chars)' });
+      }
+      const customDate = new Date(certificateData.custom_date);
+      if (isNaN(customDate.getTime()) || customDate > new Date()) {
+        return res.status(400).json({ success: false, error: 'custom_date must be a valid past or current date (YYYY-MM-DD)' });
+      }
+      if (String(certificateData.custom_text).length > 120) {
+        return res.status(400).json({ success: false, error: 'custom_text too long (max 120 chars)' });
+      }
+    } else {
+      // normalizza campi custom a stringa vuota per CSV
+      certificateData.custom_icon_code = '';
+      certificateData.custom_date = '';
+      certificateData.custom_text = '';
+    }
+
     // Aggiungi timestamp
     certificateData.write_date = new Date().toISOString();
     
@@ -626,6 +680,10 @@ app.put(`${config.apiPrefix}/csv-row/:index`, async (req, res) => {
         { id: 'tax_code', title: 'tax_code' },
         { id: 'social_capital', title: 'social_capital' },
         { id: 'authorization', title: 'authorization' },
+        { id: 'bar_type', title: 'bar_type' },
+        { id: 'custom_icon_code', title: 'custom_icon_code' },
+        { id: 'custom_date', title: 'custom_date' },
+        { id: 'custom_text', title: 'custom_text' },
         { id: 'blockchain_hash', title: 'blockchain_hash' },
         { id: 'blockchain_link', title: 'blockchain_link' },
         { id: 'user', title: 'user' },
@@ -704,6 +762,10 @@ app.delete(`${config.apiPrefix}/csv-row/:index`, async (req, res) => {
         { id: 'tax_code', title: 'tax_code' },
         { id: 'social_capital', title: 'social_capital' },
         { id: 'authorization', title: 'authorization' },
+        { id: 'bar_type', title: 'bar_type' },
+        { id: 'custom_icon_code', title: 'custom_icon_code' },
+        { id: 'custom_date', title: 'custom_date' },
+        { id: 'custom_text', title: 'custom_text' },
         { id: 'blockchain_hash', title: 'blockchain_hash' },
         { id: 'blockchain_link', title: 'blockchain_link' },
         { id: 'user', title: 'user' },
@@ -790,6 +852,39 @@ app.listen(PORT, () => {
   console.log(`📊 Health check: http://localhost:${PORT}${config.apiPrefix}/health`);
   console.log(`📝 API docs: http://localhost:${PORT}${config.apiPrefix}/`);
 });
+
+// Auto-backup periodico e retention
+if (config.autoBackup) {
+  const BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000; // giornaliero
+  const runBackup = async () => {
+    try {
+      const file = await csvManager.backupCSV();
+      if (file) {
+        logger.info('Backup eseguito', { type: 'AUTO_BACKUP_DONE', file });
+      }
+      // retention
+      try {
+        const fs = require('fs');
+        const files = fs.readdirSync(config.backupPath)
+          .filter(f => f.endsWith('.csv'))
+          .map(f => ({ f, full: require('path').join(config.backupPath, f), stat: fs.statSync(require('path').join(config.backupPath, f)) }));
+        const cutoff = Date.now() - (config.backupRetentionDays * 24 * 60 * 60 * 1000);
+        files.forEach(({ full, stat }) => {
+          if (stat.birthtimeMs < cutoff) {
+            try { fs.unlinkSync(full); } catch (_) {}
+          }
+        });
+      } catch (retErr) {
+        logger.logError(retErr, { type: 'AUTO_BACKUP_RETENTION_ERROR' });
+      }
+    } catch (err) {
+      logger.logError(err, { type: 'AUTO_BACKUP_ERROR' });
+    }
+  };
+  // esegui all'avvio e poi schedula
+  runBackup();
+  setInterval(runBackup, BACKUP_INTERVAL_MS);
+}
 
 // Gestione chiusura graceful
 process.on('SIGINT', () => {

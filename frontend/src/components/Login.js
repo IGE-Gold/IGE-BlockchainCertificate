@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff, Lock, User } from 'lucide-react';
+import { apiService } from '../services/api';
 
 const Login = ({ onLogin }) => {
   const [credentials, setCredentials] = useState({
@@ -14,19 +15,27 @@ const Login = ({ onLogin }) => {
     e.preventDefault();
     setLoading(true);
     setError('');
-
-    // Controllo credenziali da .env
-    const validUsername = process.env.REACT_APP_LOGIN_USERNAME || '1234567890';
-    const validPassword = process.env.REACT_APP_LOGIN_PASSWORD || '0987654321';
-
-    setTimeout(() => {
-      if (credentials.username === validUsername && credentials.password === validPassword) {
+    try {
+      const res = await apiService.login(credentials.username, credentials.password);
+      if (res?.success && res?.user?.id) {
+        try {
+          // Clear any legacy persistent auth
+          localStorage.removeItem('ige_gold_auth');
+          localStorage.removeItem('ige_user_id');
+          localStorage.removeItem('ige_username');
+        } catch (_) {}
+        sessionStorage.setItem('ige_gold_auth', 'true');
+        sessionStorage.setItem('ige_user_id', res.user.id);
+        sessionStorage.setItem('ige_username', res.user.username);
         onLogin(true);
       } else {
         setError('Credenziali non valide');
       }
+    } catch (err) {
+      setError('Credenziali non valide');
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   const handleChange = (e) => {
