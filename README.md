@@ -19,6 +19,11 @@ A blockchain-based certificate management system for gold products, built with N
 - **Auto-expanding Display**: Certificate data shows without scrollbars
 - **Professional Screenshots**: Complete visual documentation
 - **Smart Serial Generation**: YYNNNNN format with year-based progressive numbering
+- **Complete API**: RESTful API with comprehensive documentation
+- **User Management**: Full CRUD operations for user accounts
+- **Backup System**: Download certificates and backup files
+- **Flexible Dates**: No date constraints on certificate creation
+- **Production Ready**: Deployed on Render with persistent storage
 
 ## 📸 Screenshots
 
