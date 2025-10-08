@@ -337,6 +337,50 @@ Certificates are stored on-chain with the following structure:
 ## 📁 Project Structure
 
 ```
+## 🚢 Deploy to Railway (Backend)
+
+### Prerequisites
+- Railway account and CLI installed (`npm i -g @railway/cli`)
+- A GitHub repository connected to Railway (recommended)
+
+### Configuration
+- `railway.toml` is configured to build from `backend/` and start the server via `npm start`.
+- Healthcheck is set to `GET /api/health`.
+- Ensure environment variables are set in Railway (use `backend/env.example` as reference):
+  - `PORT` (Railway often injects `PORT` automatically)
+  - `POLYGON_RPC_URL`, `PRIVATE_KEY`, `CHAIN_ID`, `EXPLORER_BASE_URL`
+  - `API_TOKEN`, `CORS_ORIGIN`
+  - `CSV_DELIMITER`, `CSV_ENCODING`, `MAX_FILE_SIZE`
+
+### Steps (CLI)
+1. Login and initialize:
+   ```bash
+   railway login
+   railway init
+   ```
+2. Link the project/environment:
+   ```bash
+   railway link
+   railway environment list
+   railway environment use <env-name>
+   ```
+3. Set variables (example):
+   ```bash
+   railway variables set API_TOKEN=your_token
+   railway variables set POLYGON_RPC_URL=https://rpc-amoy.polygon.technology/
+   railway variables set PRIVATE_KEY=0x...
+   railway variables set CHAIN_ID=80002
+   ```
+4. Deploy:
+   ```bash
+   railway up
+   ```
+5. Verify healthcheck passes and note the assigned public URL.
+
+### Notes
+- Railway provides ephemeral storage; CSVs persist only within the container filesystem. Use periodic backups (already enabled) and consider mounting a persistent volume or exporting backups externally.
+- Ensure `CORS_ORIGIN` includes your frontend origin if hosted elsewhere.
+
 ## 📝 Changelog
 
 ### 2025-10-08
