@@ -337,3 +337,11 @@ Certificates are stored on-chain with the following structure:
 ## 📁 Project Structure
 
 ```
+## 📝 Changelog
+
+### 2025-10-08
+- Frontend: Made `production_date` editable; removed 7-day recency check.
+- Frontend: `custom_date` is now optional when `bar_type=custom`.
+- Backend: Relaxed date validations; `custom_date` can be any valid date (past/present/future) and is optional for `custom` bars.
+- Bulk: Updated validation to align with optional `custom_date` and relaxed constraints.
+- Docs: Updated README to reflect flexible dates and new validation rules.
