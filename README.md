@@ -337,6 +337,51 @@ Certificates are stored on-chain with the following structure:
 ## 📁 Project Structure
 
 ```
+## 🚀 Deploy to Render (Backend)
+
+### Prerequisites
+- Render account (free tier available)
+- GitHub repository connected to Render
+
+### Configuration
+- `render.yaml` is provided and configures a Node.js web service with `backend/` as root directory.
+- Render provides persistent filesystem storage (CSV files persist between deployments).
+- Set sensitive environment variables manually in Render dashboard: `API_TOKEN` and `PRIVATE_KEY`.
+
+### Steps (Web Dashboard)
+1. **Connect Repository**
+   - Go to [Render Dashboard](https://dashboard.render.com)
+   - Click "New +" → "Web Service"
+   - Connect your GitHub repository
+   - Select branch `Render`
+
+2. **Configure Service**
+   - Name: `ige-backend` (or your preferred name)
+   - Root Directory: `backend`
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+   - Plan: Free
+
+3. **Set Environment Variables**
+   - In Render dashboard → Environment tab
+   - Add these variables manually:
+     - `API_TOKEN`: your secure API token
+     - `PRIVATE_KEY`: your blockchain private key (0x...)
+   - Other variables are pre-configured in `render.yaml`
+
+4. **Deploy**
+   - Click "Create Web Service"
+   - Render will build and deploy automatically
+
+### Verify
+- Once deployed, open the service URL and test `/api/health`
+- Check logs in Render dashboard if needed
+
+### Storage Notes
+- Render provides persistent filesystem storage
+- CSV files in `./data/` and backups in `./backups/` persist between deployments
+- No additional storage configuration needed
+
 ## 📝 Changelog
 
 ### 2025-10-08
