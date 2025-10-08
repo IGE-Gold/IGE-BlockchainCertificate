@@ -117,6 +117,9 @@ let bulkWriteInProgress = false;
 // Inizializza Express
 const app = express();
 
+// Trust proxy per Render (necessario per rate limiting)
+app.set('trust proxy', 1);
+
 // Middleware di sicurezza
 if (config.helmetEnabled) {
   app.use(helmet());
