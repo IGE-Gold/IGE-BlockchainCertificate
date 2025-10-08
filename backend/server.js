@@ -1074,6 +1074,90 @@ app.get(`${config.apiPrefix}/backups`, async (req, res) => {
   }
 });
 
+// Route per scaricare backup specifico
+app.get(`${config.apiPrefix}/backup/download/:filename`, async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    
+    const filename = req.params.filename;
+    const backupDir = config.backupPath;
+    const filePath = path.join(backupDir, filename);
+    
+    // Verifica che il file esista
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Backup file not found'
+      });
+    }
+    
+    // Verifica che sia un file CSV
+    if (!filename.endsWith('.csv')) {
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid file type. Only CSV files are allowed.'
+      });
+    }
+    
+    // Imposta header per download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    // Invia il file
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+    
+    logger.info(`Backup downloaded: ${filename}`, { ip: req.ip });
+    
+  } catch (error) {
+    logger.logError(error, { endpoint: '/api/backup/download' });
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Route per scaricare il file certificati corrente
+app.get(`${config.apiPrefix}/certificates/download`, async (req, res) => {
+  try {
+    const fs = require('fs');
+    const path = require('path');
+    
+    const csvPath = config.csvPath;
+    
+    // Verifica che il file esista
+    if (!fs.existsSync(csvPath)) {
+      return res.status(404).json({
+        success: false,
+        error: 'Certificates file not found'
+      });
+    }
+    
+    // Genera nome file con timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `certificates_${timestamp}.csv`;
+    
+    // Imposta header per download
+    res.setHeader('Content-Type', 'text/csv');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    
+    // Invia il file
+    const fileStream = fs.createReadStream(csvPath);
+    fileStream.pipe(res);
+    
+    logger.info(`Current certificates downloaded`, { ip: req.ip });
+    
+  } catch (error) {
+    logger.logError(error, { endpoint: '/api/certificates/download' });
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Avvia server
 const PORT = config.port;
 app.listen(PORT, () => {
