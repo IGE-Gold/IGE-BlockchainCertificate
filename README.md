@@ -124,6 +124,8 @@ The frontend requires API connection settings. Copy `frontend/env.example` to `f
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:3001
 - **API Health**: http://localhost:3001/api/health
+- **Production Backend**: https://ige-blockchaincertificate.onrender.com
+- **Production Health**: https://ige-blockchaincertificate.onrender.com/api/health
 
 ### Login
 
@@ -376,6 +378,7 @@ Certificates are stored on-chain with the following structure:
 ### Verify
 - Once deployed, open the service URL and test `/api/health`
 - Check logs in Render dashboard if needed
+- **Live Backend**: https://ige-blockchaincertificate.onrender.com/api/health
 
 ### Storage Notes
 - Render provides persistent filesystem storage
@@ -390,3 +393,5 @@ Certificates are stored on-chain with the following structure:
 - Backend: Relaxed date validations; `custom_date` can be any valid date (past/present/future) and is optional for `custom` bars.
 - Bulk: Updated validation to align with optional `custom_date` and relaxed constraints.
 - Docs: Updated README to reflect flexible dates and new validation rules.
+- Deploy: Added Render deployment configuration with persistent storage.
+- Production: Backend successfully deployed at https://ige-blockchaincertificate.onrender.com
