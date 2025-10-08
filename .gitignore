@@ -20,9 +20,9 @@ backend/logs/*.log
 *.log
 
 # Database and sensitive data
-backend/data/
+backend/data/certificates.csv
 backend/backups/
-data/
+data/certificates.csv
 backups/
 logs/
 
