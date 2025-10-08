@@ -60,6 +60,7 @@ class UsersManager {
       
       // Genera nuovo ID
       const maxId = users.reduce((max, user) => {
+        if (!user.id || !user.id.startsWith('User_')) return max;
         const idNum = parseInt(user.id.replace('User_', ''));
         return idNum > max ? idNum : max;
       }, 0);
