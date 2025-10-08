@@ -1158,6 +1158,362 @@ app.get(`${config.apiPrefix}/certificates/download`, async (req, res) => {
   }
 });
 
+// ==================== GESTIONE UTENTI ====================
+
+// Route per ottenere tutti gli utenti
+app.get(`${config.apiPrefix}/users`, async (req, res) => {
+  try {
+    const users = await usersManager.getAllUsers();
+    res.json({
+      success: true,
+      users: users,
+      count: users.length,
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    logger.logError(error, { endpoint: '/api/users' });
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Route per aggiungere un nuovo utente
+app.post(`${config.apiPrefix}/users`, async (req, res) => {
+  try {
+    const { username, password } = req.body;
+    
+    if (!username || !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Username e password sono richiesti'
+      });
+    }
+    
+    const result = await usersManager.addUser(username, password);
+    
+    if (result.success) {
+      res.status(201).json({
+        success: true,
+        message: 'Utente aggiunto con successo',
+        user: result.user,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error
+      });
+    }
+  } catch (error) {
+    logger.logError(error, { endpoint: '/api/users POST' });
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Route per modificare un utente
+app.put(`${config.apiPrefix}/users/:id`, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, password } = req.body;
+    
+    if (!username && !password) {
+      return res.status(400).json({
+        success: false,
+        error: 'Almeno username o password devono essere forniti'
+      });
+    }
+    
+    const result = await usersManager.updateUser(id, { username, password });
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        message: 'Utente aggiornato con successo',
+        user: result.user,
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        error: result.error
+      });
+    }
+  } catch (error) {
+    logger.logError(error, { endpoint: '/api/users PUT' });
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// Route per eliminare un utente
+app.delete(`${config.apiPrefix}/users/:id`, async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const result = await usersManager.deleteUser(id);
+    
+    if (result.success) {
+      res.json({
+        success: true,
+        message: 'Utente eliminato con successo',
+        timestamp: new Date().toISOString()
+      });
+    } else {
+      res.status(404).json({
+        success: false,
+        error: result.error
+      });
+    }
+  } catch (error) {
+    logger.logError(error, { endpoint: '/api/users DELETE' });
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
+// ==================== DOCUMENTAZIONE API ====================
+
+// Route per ottenere documentazione completa dell'API
+app.get(`${config.apiPrefix}/docs`, async (req, res) => {
+  try {
+    const apiDocs = {
+      success: true,
+      title: "IGE Blockchain Certificate API",
+      version: "1.0.0",
+      baseUrl: `${req.protocol}://${req.get('host')}${config.apiPrefix}`,
+      authentication: {
+        type: "Bearer Token",
+        token: "19111976",
+        usage: "Aggiungi ?token=19111976 alle query o header Authorization: Bearer 19111976"
+      },
+      endpoints: {
+        // Endpoint pubblici (senza autenticazione)
+        public: [
+          {
+            method: "GET",
+            path: "/health",
+            description: "Health check del server e connessione blockchain",
+            parameters: [],
+            example: `${config.apiPrefix}/health`
+          },
+          {
+            method: "POST",
+            path: "/login",
+            description: "Login utente via CSV",
+            parameters: [
+              { name: "username", type: "string", required: true },
+              { name: "password", type: "string", required: true }
+            ],
+            example: `${config.apiPrefix}/login`
+          }
+        ],
+        // Endpoint autenticati
+        authenticated: [
+          {
+            method: "GET",
+            path: "/generate-serial",
+            description: "Genera nuovo seriale progressivo",
+            parameters: [],
+            example: `${config.apiPrefix}/generate-serial?token=19111976`
+          },
+          {
+            method: "POST",
+            path: "/validate-serial",
+            description: "Valida seriale esistente",
+            parameters: [
+              { name: "serial", type: "string", required: true }
+            ],
+            example: `${config.apiPrefix}/validate-serial?token=19111976`
+          },
+          {
+            method: "POST",
+            path: "/write-certificate",
+            description: "Crea nuovo certificato e scrive su blockchain",
+            parameters: [
+              { name: "serial", type: "string", required: true },
+              { name: "user", type: "string", required: true },
+              { name: "weight", type: "number", required: true },
+              { name: "bar_type", type: "string", required: true },
+              { name: "production_date", type: "string", required: true },
+              { name: "custom_icon_code", type: "string", required: false },
+              { name: "custom_text", type: "string", required: false },
+              { name: "custom_date", type: "string", required: false }
+            ],
+            example: `${config.apiPrefix}/write-certificate?token=19111976`
+          },
+          {
+            method: "GET",
+            path: "/certificate/:serial",
+            description: "Verifica certificato esistente",
+            parameters: [
+              { name: "serial", type: "string", required: true, path: true }
+            ],
+            example: `${config.apiPrefix}/certificate/ABC1234?token=19111976`
+          },
+          {
+            method: "GET",
+            path: "/certificates",
+            description: "Lista tutti i certificati con filtri",
+            parameters: [
+              { name: "search", type: "string", required: false },
+              { name: "limit", type: "number", required: false, default: 100 },
+              { name: "offset", type: "number", required: false, default: 0 }
+            ],
+            example: `${config.apiPrefix}/certificates?token=19111976&limit=50`
+          },
+          {
+            method: "GET",
+            path: "/certificates/download",
+            description: "Scarica file certificati corrente",
+            parameters: [],
+            example: `${config.apiPrefix}/certificates/download?token=19111976`
+          },
+          {
+            method: "GET",
+            path: "/stats",
+            description: "Statistiche sistema",
+            parameters: [],
+            example: `${config.apiPrefix}/stats?token=19111976`
+          },
+          {
+            method: "GET",
+            path: "/logs",
+            description: "Log del sistema",
+            parameters: [
+              { name: "level", type: "string", required: false, default: "info" },
+              { name: "limit", type: "number", required: false, default: 50 }
+            ],
+            example: `${config.apiPrefix}/logs?token=19111976&level=error`
+          },
+          {
+            method: "GET",
+            path: "/backups",
+            description: "Lista backup disponibili",
+            parameters: [],
+            example: `${config.apiPrefix}/backups?token=19111976`
+          },
+          {
+            method: "GET",
+            path: "/backup/download/:filename",
+            description: "Scarica backup specifico",
+            parameters: [
+              { name: "filename", type: "string", required: true, path: true }
+            ],
+            example: `${config.apiPrefix}/backup/download/certificates_20250929.csv?token=19111976`
+          },
+          {
+            method: "GET",
+            path: "/csv-data",
+            description: "Dati CSV per editor",
+            parameters: [],
+            example: `${config.apiPrefix}/csv-data?token=19111976`
+          },
+          {
+            method: "PUT",
+            path: "/csv-row/:index",
+            description: "Modifica riga CSV",
+            parameters: [
+              { name: "index", type: "number", required: true, path: true },
+              { name: "data", type: "object", required: true }
+            ],
+            example: `${config.apiPrefix}/csv-row/0?token=19111976`
+          },
+          {
+            method: "DELETE",
+            path: "/csv-row/:index",
+            description: "Elimina riga CSV",
+            parameters: [
+              { name: "index", type: "number", required: true, path: true }
+            ],
+            example: `${config.apiPrefix}/csv-row/0?token=19111976`
+          },
+          {
+            method: "GET",
+            path: "/users",
+            description: "Lista tutti gli utenti",
+            parameters: [],
+            example: `${config.apiPrefix}/users?token=19111976`
+          },
+          {
+            method: "POST",
+            path: "/users",
+            description: "Aggiungi nuovo utente",
+            parameters: [
+              { name: "username", type: "string", required: true },
+              { name: "password", type: "string", required: true }
+            ],
+            example: `${config.apiPrefix}/users?token=19111976`
+          },
+          {
+            method: "PUT",
+            path: "/users/:id",
+            description: "Modifica utente esistente",
+            parameters: [
+              { name: "id", type: "string", required: true, path: true },
+              { name: "username", type: "string", required: false },
+              { name: "password", type: "string", required: false }
+            ],
+            example: `${config.apiPrefix}/users/User_001?token=19111976`
+          },
+          {
+            method: "DELETE",
+            path: "/users/:id",
+            description: "Elimina utente",
+            parameters: [
+              { name: "id", type: "string", required: true, path: true }
+            ],
+            example: `${config.apiPrefix}/users/User_001?token=19111976`
+          }
+        ],
+        // Operazioni bulk
+        bulk: [
+          {
+            method: "POST",
+            path: "/bulk/validate",
+            description: "Valida CSV massivo",
+            parameters: [
+              { name: "file", type: "file", required: true, contentType: "multipart/form-data" }
+            ],
+            example: `${config.apiPrefix}/bulk/validate?token=19111976`
+          },
+          {
+            method: "POST",
+            path: "/bulk/write",
+            description: "Scrive certificati massivi",
+            parameters: [
+              { name: "certificates", type: "array", required: true }
+            ],
+            example: `${config.apiPrefix}/bulk/write?token=19111976`
+          }
+        ]
+      },
+      blockchain: {
+        network: "Polygon Amoy Testnet",
+        explorer: config.explorerBaseUrl,
+        chainId: config.chainId
+      },
+      timestamp: new Date().toISOString()
+    };
+    
+    res.json(apiDocs);
+  } catch (error) {
+    logger.logError(error, { endpoint: '/api/docs' });
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+});
+
 // Avvia server
 const PORT = config.port;
 app.listen(PORT, () => {
