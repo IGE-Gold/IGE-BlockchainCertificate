@@ -20,9 +20,9 @@ backend/logs/*.log
 *.log
 
 # Database and sensitive data
-backend/data/certificates.csv
+# backend/data/  # Commented out to include CSV files in deployment
 backend/backups/
-data/certificates.csv
+# data/  # Commented out to include CSV files in deployment
 backups/
 logs/
 
